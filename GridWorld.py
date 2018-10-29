@@ -21,44 +21,58 @@ def fill_rewords():
 transitions = [[[[]]]]
 q_values = [[[]]]
 
-def fill_transitions():
-    for row in range(8):
 
-        row_vals = []
+def init():
+    global transitions
+    for row in range(8):
+        transitions.append([])
         for col in range(8):
-            col_vals = []
+            transitions[row].append([])
+            for action in range(4):
+                transitions[row][col].append([])
+                for coord in range(2):
+                    transitions[row][col][action].append(0)
+
+
+def fill_transitions():
+    global q_values
+    global transitions
+    for row in range(8):
+        q_values.append([])
+
+        for col in range(8):
+            # if check_walls(row, col):
+            #     continue
+            # if attribute_reword(row, col) != -1:
+            #     continue
+
+            q_values[row].append([])
 
             for action in range(4):
-                q_values.append(0)
-                coords = []
-                coords.append(row)
-                coords.append(col)
+                q_values[row][col].append(0)
 
+                print("row "+str(row)+" col "+str(col) + " action "+str(action))
                 # North
                 if action == 0:
-                    if row - 1 > 0 and not check_walls(row-1, col):
-                        coords[0] = row - 1
+                    if ((row - 1) >= 0) and (not check_walls(row-1, col)):
+                        transitions[row][col][action][0] = row - 1
 
                 # South
                 elif action == 2:
-                    if row+1 < 7 and not check_walls(row+1, col):
-                        coords[0] = row + 1
+                    if ((row + 1) <= 7) and (not check_walls(row+1, col)):
+                        transitions[row][col][action][0] = row + 1
 
                 # West
                 elif action == 3:
-                    if col - 1 > 0 and not check_walls(row, col-1):
-                        coords[1] = col-1
+                    if ((col - 1) >= 0) and (not check_walls(row, col-1)):
+                        transitions[row][col][action][1] = col-1
 
                 # East
                 elif action == 1:
-                    if col + 1 < 7 and not check_walls(row, col+1):
-                        coords[1] = col+1
+                    if ((col + 1) <= 7) and (not check_walls(row, col+1)):
+                        transitions[row][col][action][1] = col+1
 
-                col_vals.append(coords)
-
-            row_vals.append(col_vals)
-
-        transitions.append(row_vals)
+                print("row " + str(transitions[row][col][action][0]) + " col " + str(transitions[row][col][action][1]))
 
 
 def check_walls(x, y):
@@ -91,20 +105,51 @@ def start():
     while check_walls(x, y) or reword != -1:
         x = random.randint(0, 7)
         y = random.randint(0, 7)
-        
+
     return x, y
 
 
 def sarsa(x, y, action):
     alpha = 0.9
     gamma = 0.9
+    print("x "+str(x)+" y "+str(y)+" action "+str(action))
+    print("transitions[x][y][action][0] "+str(transitions[x][y][action][0]))
+    print("transitions[x][y][action][1] " + str(transitions[x][y][action][1]))
     next_state_x = transitions[x][y][action][0]
     next_state_y = transitions[x][y][action][1]
     next_action = random.randint(0, 3)
-    q_values[x][y][action] = q_values[x][y][action] + alpha * (attribute_reword(next_state_x, next_state_y) + gamma * (q_values[next_state_x][next_state_y][next_action]- q_values[x][y][action]))
+
+    qv = q_values[x][y][action]
+    nqv = q_values[next_state_x][next_state_y][next_action]
+    r = attribute_reword(next_state_x, next_state_y)
+
+    q_values[x][y][action] = qv + alpha * (r + gamma * (nqv - qv))
+
     return next_state_x, next_state_y, next_action
 
+
 def simulator(runs):
+    global transitions
+    global q_values
+    init()
+    fill_transitions()
+    action = random.randint(0, 3)
+    x, y = start()
     for i in range(runs):
-        action = random.randint(0, 3)
-        x,y = start()
+        x, y, action = sarsa(x, y, action)
+
+        if attribute_reword(x, y) != -1:
+            action = random.randint(0, 3)
+            x, y = start()
+
+    print_q()
+
+
+def print_q():
+    for i in range(8):
+        for j in range(8):
+            print(str(q_values.index(max(q_values[i][j]))), end=" ")
+        print("")
+
+
+simulator(100000)
