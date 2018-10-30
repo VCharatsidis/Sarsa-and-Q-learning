@@ -1,23 +1,5 @@
 import random
 
-world = []
-
-fixed_rewords = [[]]
-
-
-def fill_rewords():
-    for row in range(8):
-        row_vals = []
-
-        for col  in range(8):
-            row_vals.append(-1)
-
-        fixed_rewords.append(row_vals)
-
-    fixed_rewords[7][7] = 10
-    fixed_rewords[5][4] = -20
-
-
 transitions = [[[[]]]]
 q_values = [[[]]]
 
@@ -49,7 +31,9 @@ def fill_transitions():
             q_values[row].append([])
 
             for action in range(4):
-                q_values[row][col].append(0)
+                q_values[row][col].append(-1)
+                transitions[row][col][action][0] = row
+                transitions[row][col][action][1] = col
 
                 print("row "+str(row)+" col "+str(col) + " action "+str(action))
                 # North
@@ -89,32 +73,51 @@ def check_walls(x, y):
 
 
 def attribute_reword(x, y):
-    if x == 5 and y == 4:
-        return -20
-    if x == 7 and y == 7:
-        return 10
 
-    return -1
+    if x == 5 and y == 4:
+        return -1000
+    elif x == 7 and y == 7:
+        return 10
+    else:
+        return -1
 
 
 def start():
     x = random.randint(0, 7)
     y = random.randint(0, 7)
 
-    reword = attribute_reword(x, y)
-    while check_walls(x, y) or reword != -1:
+    while check_walls(x, y) or (x == 7 and y == 7) or (x == 5 and y == 4):
         x = random.randint(0, 7)
         y = random.randint(0, 7)
 
     return x, y
 
 
-def sarsa(x, y, action):
-    alpha = 0.9
+def q_learning(x, y):
+    alpha = 0.95
     gamma = 0.9
-    print("x "+str(x)+" y "+str(y)+" action "+str(action))
-    print("transitions[x][y][action][0] "+str(transitions[x][y][action][0]))
-    print("transitions[x][y][action][1] " + str(transitions[x][y][action][1]))
+
+    action = random.randint(0, 3)
+    next_state_x = transitions[x][y][action][0]
+    next_state_y = transitions[x][y][action][1]
+    next_action = q_values[next_state_x][next_state_y].index(max(q_values[next_state_x][next_state_y]))
+
+    qv = q_values[x][y][action]
+    nqv = q_values[next_state_x][next_state_y][next_action]
+    r = attribute_reword(next_state_x, next_state_y)
+
+    q_values[x][y][action] = qv + alpha * (r + gamma * (nqv - qv))
+
+    return next_state_x, next_state_y, next_action
+
+
+def sarsa(x, y, action):
+    alpha = 1
+    gamma = 0.9
+    # print("x "+str(x)+" y "+str(y)+" action "+str(action))
+    # print("transitions[x][y][action][0] "+str(transitions[x][y][action][0]))
+    # print("transitions[x][y][action][1] " + str(transitions[x][y][action][1]))
+    action = random.randint(0, 3)
     next_state_x = transitions[x][y][action][0]
     next_state_y = transitions[x][y][action][1]
     next_action = random.randint(0, 3)
@@ -135,21 +138,62 @@ def simulator(runs):
     fill_transitions()
     action = random.randint(0, 3)
     x, y = start()
+    episodes = 0
+
     for i in range(runs):
         x, y, action = sarsa(x, y, action)
 
-        if attribute_reword(x, y) != -1:
+        if (x == 7 and y == 7) or (x == 5 and y == 4):
             action = random.randint(0, 3)
             x, y = start()
+            episodes += 1
 
+        if x == 7 and y == 7:
+            print("Error: program should terminate when reach T")
+            break
+
+        if x == 5 and y == 4:
+            print("Error: program should terminate when reach S")
+            break
+
+        if check_walls(x, y):
+            print("Error: program should not walk through wals")
+            break
+
+    print("episodes "+str(episodes))
     print_q()
+    print_qvalues()
 
 
 def print_q():
+    global q_values
+
     for i in range(8):
         for j in range(8):
-            print(str(q_values.index(max(q_values[i][j]))), end=" ")
+
+            if i == 7 and j == 7:
+                print("T", end=" ")
+            elif i == 5 and j == 4:
+                print("S", end=" ")
+            elif check_walls(i, j):
+                print("W", end=" ")
+            else:
+                max_value_index = q_values[i][j].index(max(q_values[i][j]))
+                print(str(max_value_index), end=" ")
+
         print("")
 
 
-simulator(100000)
+def print_qvalues():
+    global q_values
+
+    for i in range(8):
+        for j in range(8):
+            max_value = max(q_values[i][j])
+            print(str(max_value), end=" ")
+
+        print("")
+
+
+
+simulator(10000000)
