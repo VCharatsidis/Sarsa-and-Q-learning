@@ -31,7 +31,15 @@ def fill_transitions():
             q_values[row].append([])
 
             for action in range(4):
-                q_values[row][col].append(-1)
+                if check_walls(row, col):
+                    q_values[row][col].append(-1)
+                elif row == 7 and col == 7:
+                    q_values[row][col].append(10)
+                elif row == 5 and col == 4:
+                    q_values[row][col].append(-20)
+                else:
+                    q_values[row][col].append(0)
+
                 transitions[row][col][action][0] = row
                 transitions[row][col][action][1] = col
 
@@ -75,7 +83,7 @@ def check_walls(x, y):
 def attribute_reword(x, y):
 
     if x == 5 and y == 4:
-        return -1000
+        return -20
     elif x == 7 and y == 7:
         return 10
     else:
@@ -94,7 +102,7 @@ def start():
 
 
 def q_learning(x, y):
-    alpha = 0.95
+    alpha = 0.3
     gamma = 0.9
 
     action = random.randint(0, 3)
@@ -108,19 +116,27 @@ def q_learning(x, y):
 
     q_values[x][y][action] = qv + alpha * (r + gamma * (nqv - qv))
 
-    return next_state_x, next_state_y, next_action
+    return next_state_x, next_state_y
 
 
 def sarsa(x, y, action):
-    alpha = 1
+    alpha = 0.9
     gamma = 0.9
     # print("x "+str(x)+" y "+str(y)+" action "+str(action))
     # print("transitions[x][y][action][0] "+str(transitions[x][y][action][0]))
     # print("transitions[x][y][action][1] " + str(transitions[x][y][action][1]))
-    action = random.randint(0, 3)
+    # if random.uniform(0, 1) < 0.9:
+    #     action = q_values[x][y].index(max(q_values[x][y]))
+    # else:
+    #     action = random.randint(0, 3)
+
     next_state_x = transitions[x][y][action][0]
     next_state_y = transitions[x][y][action][1]
-    next_action = random.randint(0, 3)
+
+    if random.uniform(0, 1) < 0.9:
+        next_action = q_values[next_state_x][next_state_y].index(max(q_values[next_state_x][next_state_y]))
+    else:
+        next_action = random.randint(0, 3)
 
     qv = q_values[x][y][action]
     nqv = q_values[next_state_x][next_state_y][next_action]
@@ -136,15 +152,15 @@ def simulator(runs):
     global q_values
     init()
     fill_transitions()
-    action = random.randint(0, 3)
     x, y = start()
     episodes = 0
-
+    action = random.randint(0,3)
     for i in range(runs):
         x, y, action = sarsa(x, y, action)
+        #x, y, action = q_learning(x, y)
 
         if (x == 7 and y == 7) or (x == 5 and y == 4):
-            action = random.randint(0, 3)
+            action = random.randint(0,3)
             x, y = start()
             episodes += 1
 
@@ -193,7 +209,6 @@ def print_qvalues():
             print(str(max_value), end=" ")
 
         print("")
-
 
 
 simulator(10000000)
