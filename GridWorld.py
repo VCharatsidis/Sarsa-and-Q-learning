@@ -102,7 +102,7 @@ def start():
 
 
 def q_learning(x, y):
-    alpha = 0.3
+    alpha = 0.2
     gamma = 0.9
 
     action = random.randint(0, 3)
@@ -114,13 +114,13 @@ def q_learning(x, y):
     nqv = q_values[next_state_x][next_state_y][next_action]
     r = attribute_reword(next_state_x, next_state_y)
 
-    q_values[x][y][action] = qv + alpha * (r + gamma * (nqv - qv))
+    q_values[x][y][action] = qv + alpha * (r + gamma * nqv - qv)
 
     return next_state_x, next_state_y
 
 
 def sarsa(x, y, action):
-    alpha = 0.9
+    alpha = 0.2
     gamma = 0.9
     # print("x "+str(x)+" y "+str(y)+" action "+str(action))
     # print("transitions[x][y][action][0] "+str(transitions[x][y][action][0]))
@@ -133,7 +133,7 @@ def sarsa(x, y, action):
     next_state_x = transitions[x][y][action][0]
     next_state_y = transitions[x][y][action][1]
 
-    if random.uniform(0, 1) < 0.9:
+    if random.uniform(0, 1) < 0.95:
         next_action = q_values[next_state_x][next_state_y].index(max(q_values[next_state_x][next_state_y]))
     else:
         next_action = random.randint(0, 3)
@@ -142,7 +142,7 @@ def sarsa(x, y, action):
     nqv = q_values[next_state_x][next_state_y][next_action]
     r = attribute_reword(next_state_x, next_state_y)
 
-    q_values[x][y][action] = qv + alpha * (r + gamma * (nqv - qv))
+    q_values[x][y][action] = qv + alpha * (r + gamma * nqv - qv)
 
     return next_state_x, next_state_y, next_action
 
@@ -156,8 +156,8 @@ def simulator(runs):
     episodes = 0
     action = random.randint(0,3)
     for i in range(runs):
-        x, y, action = sarsa(x, y, action)
-        #x, y, action = q_learning(x, y)
+        #x, y, action = sarsa(x, y, action)
+        x, y = q_learning(x, y)
 
         if (x == 7 and y == 7) or (x == 5 and y == 4):
             action = random.randint(0,3)
