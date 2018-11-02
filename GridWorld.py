@@ -31,14 +31,14 @@ def fill_transitions():
             q_values[row].append([])
 
             for action in range(4):
-                if check_walls(row, col):
-                    q_values[row][col].append(-1)
-                elif row == 7 and col == 7:
-                    q_values[row][col].append(10)
-                elif row == 5 and col == 4:
-                    q_values[row][col].append(-20)
-                else:
-                    q_values[row][col].append(0)
+                # if check_walls(row, col):
+                #     q_values[row][col].append(-1)
+                # elif row == 7 and col == 7:
+                #     q_values[row][col].append(10)
+                # elif row == 5 and col == 4:
+                #     q_values[row][col].append(-20)
+                # else:
+                q_values[row][col].append(0)
 
                 transitions[row][col][action][0] = row
                 transitions[row][col][action][1] = col
@@ -102,7 +102,7 @@ def start():
 
 
 def q_learning(x, y):
-    alpha = 0.2
+    alpha = 0.1
     gamma = 0.9
 
     action = random.randint(0, 3)
@@ -120,7 +120,7 @@ def q_learning(x, y):
 
 
 def sarsa(x, y, action):
-    alpha = 0.2
+    alpha = 0.1
     gamma = 0.9
     # print("x "+str(x)+" y "+str(y)+" action "+str(action))
     # print("transitions[x][y][action][0] "+str(transitions[x][y][action][0]))
@@ -160,7 +160,7 @@ def simulator(runs):
         x, y = q_learning(x, y)
 
         if (x == 7 and y == 7) or (x == 5 and y == 4):
-            action = random.randint(0,3)
+            action = random.randint(0, 3)
             x, y = start()
             episodes += 1
 
